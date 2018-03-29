@@ -1,0 +1,3 @@
+# typeracer-server
+
+yes

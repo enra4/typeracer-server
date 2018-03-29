@@ -1,0 +1,13 @@
+name: typeracer-server
+version: 0.1.0
+
+authors:
+  - enra4 <cudcsb@gmail.com>
+
+targets:
+  typeracer-server:
+    main: src/typeracer-server.cr
+
+crystal: 0.24.2
+
+license: MIT
