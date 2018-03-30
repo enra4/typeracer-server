@@ -16,12 +16,11 @@ module Typeracer::Server
 
 	def self.drop_client(client)
 		(0..@@players.size - 1).each do |i|
-			if @@players[i].@client == client
-				@@players[i].@client.close
-				@@players.delete_at(i)
-				self.update_state
-				return
-			end
+			next if @@players[i].@client != client
+			@@players[i].@client.close
+			@@players.delete_at(i)
+			self.update_state
+			return
 		end
 	end
 
@@ -50,12 +49,11 @@ module Typeracer::Server
 		case res.type
 		when "join"
 			(0..@@players.size - 1).each do |i|
-				if @@players[i].@name == res.name
-					client.close
-					puts "cupcake"
-					puts @@players
-					return
-				end
+				next if @@players[i].@name != res.name
+				client.close
+				puts "cupcake"
+				puts @@players
+				return
 			end
 
 			@@players << Player.new(client, res.name)
