@@ -48,6 +48,7 @@ module Typeracer::Server
 
 		case res.type
 		when "join"
+			# first, make sure nobody already uses name
 			(0..@@players.size - 1).each do |i|
 				next if @@players[i].@name != res.name
 				client.close
@@ -59,7 +60,21 @@ module Typeracer::Server
 			@@players << Player.new(client, res.name)
 			self.update_state
 		when "update"
+			return if @@in_game == false
 
+			@@players.each do |player|
+				next if player.@name != res.name
+				player.percent = res.percent
+			end
+
+			# check if everyone has finished their quotes
+			@@players.each do |player|
+				return if player.@percent != 100
+			end
+
+			sleep 5.seconds
+			@@finished_quote = true
+			@@game_info.send("start game")
 		end
 	end
 
@@ -69,13 +84,14 @@ module Typeracer::Server
 			# starts game
 			@@in_game = true
 			puts "start game"
-			@@game_info.send("start")
+			@@game_info.send("start game")
 			return
 		end
 
 		if @@players.size < 2 && @@in_game
 			# end game
 			@@in_game = false
+			@@finished_quote = true
 			puts "end game"
 		end
 	end
@@ -100,12 +116,18 @@ module Typeracer::Server
 		end
 
 		puts send_info
+
+		@@players.each do |player|
+			player.@client << send_info
+		end
 	end
 
 	def self.send_quote
 		while info = @@game_info.receive
 			puts info
-			if info == "start"
+			if info == "start game"
+				@@finished_quote = false
+
 				# pick random quote
 				path = "./src/typeracer-server/quotes.json"
 				quotes = Mapping::Quotes.from_json(File.read(path)).quotes
@@ -121,6 +143,7 @@ module Typeracer::Server
 				puts send_info
 
 				@@players.each do |player|
+					player.percent = 0 # reset percent finished for all
 					player.@client << send_info
 				end
 
