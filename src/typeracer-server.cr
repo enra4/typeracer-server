@@ -131,12 +131,18 @@ module Typeracer::Server
 				# pick random quote
 				path = "./src/typeracer-server/quotes.json"
 				quotes = Mapping::Quotes.from_json(File.read(path)).quotes
-				quote_info = quotes[Random.rand(quotes.size)].to_json
+				quote_info = quotes[Random.rand(quotes.size)]
 
 				send_info = JSON.build do |json|
 					json.object do
 						json.field("type", "quote")
-						json.field("info", quote_info)
+						json.field("info") do
+							json.object do
+								json.field("id", quote_info.id)
+								json.field("quote", quote_info.quote)
+								json.field("about", quote_info.about)
+							end
+						end
 					end
 				end
 
