@@ -65,6 +65,7 @@ module Typeracer::Server
 			@@players.each do |player|
 				next if player.@name != res.name
 				player.percent = res.percent
+				player.wpm = res.wpm
 			end
 
 			# check if everyone has finished their quotes
@@ -108,6 +109,7 @@ module Typeracer::Server
 							json.object do
 								json.field("name", player.@name)
 								json.field("percent", player.@percent)
+								json.field("wpm", player.@wpm)
 							end
 						end
 					end

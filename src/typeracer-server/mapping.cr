@@ -20,7 +20,8 @@ module Mapping
 		JSON.mapping(
 			type: String,
 			name: String,
-			percent: Int32 | Nil
+			percent: Int32 | Nil,
+			wpm: Float32 | Nil
 		)
 	end
 end
