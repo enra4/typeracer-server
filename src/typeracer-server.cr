@@ -48,7 +48,10 @@ module Typeracer::Server
 
 		case res.type
 		when "join"
-			# first, make sure nobody already uses name
+			# make sure name is 16char or less
+			client.close if res.name.size > 16
+
+			# make sure nobody already uses name
 			(0..@@players.size - 1).each do |i|
 				next if @@players[i].@name != res.name
 				client.close
