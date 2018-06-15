@@ -160,7 +160,7 @@ module Typeracer::Server
 
 				until @@finished_quote
 					self.send_progress
-					sleep 2.seconds
+					sleep 0.5.seconds
 				end
 			end
 		end
