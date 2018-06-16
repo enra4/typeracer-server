@@ -64,17 +64,7 @@ module Typeracer::Server
 
 			# if @@players turn two theres no reason to send them in_game info
 			# because theyre the one whos starting the game
-			if @@players.size != 2
-				send_info = JSON.build do |json|
-					json.object do
-						json.field("type", "in_game")
-						json.field("in_game", @@in_game)
-					end
-				end
-
-				client << send_info
-			end
-
+			client << self.build_in_game_info if @@players.size != 2
 			self.update_state
 		when "update"
 			return if @@in_game == false
@@ -110,6 +100,11 @@ module Typeracer::Server
 			# end game
 			@@in_game = false
 			@@finished_quote = true
+
+			if @@players.size == 1
+				@@players[0].@client << self.build_in_game_info
+			end
+
 			puts "end game"
 		end
 	end
@@ -185,6 +180,17 @@ module Typeracer::Server
 				end
 			end
 		end
+	end
+
+	def self.build_in_game_info
+		info = JSON.build do |json|
+			json.object do
+				json.field("type", "in_game")
+				json.field("in_game", @@in_game)
+			end
+		end
+
+		return info
 	end
 
 	# the actual initializing
