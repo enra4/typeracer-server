@@ -73,7 +73,7 @@ module Typeracer::Server
 
 			# check if everyone has finished their quotes
 			@@players.each do |player|
-				return if player.@percent != 100
+				return if player.@percent != 100 && player.@active == true
 			end
 
 			sleep 5.seconds
@@ -109,6 +109,8 @@ module Typeracer::Server
 				json.field("players") do
 					json.array do
 						@@players.each do |player|
+							next if player.@active == false
+
 							json.object do
 								json.field("name", player.@name)
 								json.field("percent", player.@percent)
@@ -130,6 +132,11 @@ module Typeracer::Server
 	def self.send_quote
 		while info = @@game_info.receive
 			puts info
+
+			@@players.each do |player|
+				player.active = true
+			end
+
 			if info == "start game"
 				@@finished_quote = false
 
