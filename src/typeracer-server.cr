@@ -61,6 +61,20 @@ module Typeracer::Server
 			end
 
 			@@players << Player.new(client, res.name)
+
+			# if @@players turn two theres no reason to send them in_game info
+			# because theyre the one whos starting the game
+			if @@players.size != 2
+				send_info = JSON.build do |json|
+					json.object do
+						json.field("type", "in_game")
+						json.field("in_game", @@in_game)
+					end
+				end
+
+				client << send_info
+			end
+
 			self.update_state
 		when "update"
 			return if @@in_game == false
