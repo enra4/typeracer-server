@@ -190,7 +190,7 @@ module Typeracer::Server
 	# the actual initializing
 	spawn self.send_quote
 
-	server = TCPServer.new("localhost", 1234)
+	server = TCPServer.new("0.0.0.0", 1234)
 	while client = server.accept?
 		spawn self.handle_client(client)
 	end
