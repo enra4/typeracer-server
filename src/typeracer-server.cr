@@ -89,8 +89,7 @@ module Typeracer::Server
 			end
 
 			sleep 5.seconds
-			@@finished_quote = true
-			@@game_info.send("start game")
+			self.update_state
 		end
 	end
 
@@ -101,6 +100,11 @@ module Typeracer::Server
 			@@in_game = true
 			@@game_info.send("start game")
 			return
+		end
+
+		if @@players.size > 1 && @@in_game
+			@@finished_quote = true
+			@@game_info.send("start game")
 		end
 
 		if @@players.size < 2 && @@in_game
