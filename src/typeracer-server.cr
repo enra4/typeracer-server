@@ -13,6 +13,7 @@ module Typeracer::Server
 	@@in_game = false
 	@@finished_quote = false
 	@@game_info = Channel(String).new
+	@@timelimit = 30
 
 	def self.drop_client(client)
 		(0..@@players.size - 1).each do |i|
@@ -75,9 +76,16 @@ module Typeracer::Server
 				player.wpm = res.wpm
 			end
 
+			# new round if timelimit is reached
+			if @@timelimit == 0
+				@@finished_quote = true
+				@@game_info.send("start game")
+				return
+			end
+
 			# check if everyone has finished their quotes
 			@@players.each do |player|
-				return if player.@percent != 100 && player.@active == true
+				return if (player.@percent != 100 && player.@active == true)
 			end
 
 			sleep 5.seconds
@@ -91,7 +99,6 @@ module Typeracer::Server
 		if @@players.size > 1 && !@@in_game
 			# starts game
 			@@in_game = true
-			puts "start game"
 			@@game_info.send("start game")
 			return
 		end
@@ -104,8 +111,6 @@ module Typeracer::Server
 			if @@players.size == 1
 				@@players[0].@client << self.build_in_game_info
 			end
-
-			puts "end game"
 		end
 	end
 
@@ -115,6 +120,7 @@ module Typeracer::Server
 		send_info = JSON.build do |json|
 			json.object do
 				json.field("type", "progress")
+				json.field("timelimit", @@timelimit)
 				json.field("players") do
 					json.array do
 						@@players.each do |player|
@@ -148,6 +154,7 @@ module Typeracer::Server
 
 			if info == "start game"
 				@@finished_quote = false
+				@@timelimit = 30
 
 				# pick random quote
 				path = "./src/typeracer-server/quotes.json"
@@ -175,8 +182,15 @@ module Typeracer::Server
 				end
 
 				until @@finished_quote
+					@@players.each do |player|
+						if player.@percent == 100
+							@@timelimit = @@timelimit - 1
+							break
+						end
+					end
+
 					self.send_progress
-					sleep 0.5.seconds
+					sleep 1.seconds
 				end
 			end
 		end
