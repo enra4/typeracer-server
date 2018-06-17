@@ -56,8 +56,6 @@ module Typeracer::Server
 			(0..@@players.size - 1).each do |i|
 				next if @@players[i].@name != res.name
 				client.close
-				puts "cupcake"
-				puts @@players
 				return
 			end
 
@@ -94,7 +92,6 @@ module Typeracer::Server
 	end
 
 	def self.update_state
-		puts @@players
 		if @@players.size > 1 && !@@in_game
 			# starts game
 			@@in_game = true
@@ -141,8 +138,6 @@ module Typeracer::Server
 			end
 		end
 
-		puts send_info
-
 		@@players.each do |player|
 			player.@client << send_info
 		end
@@ -150,8 +145,6 @@ module Typeracer::Server
 
 	def self.send_quote
 		while info = @@game_info.receive
-			puts info
-
 			@@players.each do |player|
 				player.active = true
 			end
@@ -177,8 +170,6 @@ module Typeracer::Server
 						end
 					end
 				end
-
-				puts send_info
 
 				@@players.each do |player|
 					player.percent = 0 # reset percent finished for all
@@ -215,6 +206,7 @@ module Typeracer::Server
 	spawn self.send_quote
 
 	server = TCPServer.new("0.0.0.0", 1234)
+	puts "server running"
 	while client = server.accept?
 		spawn self.handle_client(client)
 	end
