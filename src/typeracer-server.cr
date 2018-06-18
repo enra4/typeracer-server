@@ -5,45 +5,61 @@ require "random"
 require "socket"
 
 # i have no idea what im doing
-module Typeracer::Server
+class Server
 	include Mapping
 	include Player
 
-	@@players = [] of Player
-	@@in_game = false
-	@@finished_quote = false
-	@@game_info = Channel(String).new
-	@@timelimit = 30
+	property players
+	property in_game
+	property finished_quote
+	property in_game_info
+	property timelimit
 
-	def self.drop_client(client)
-		(0..@@players.size - 1).each do |i|
-			next if @@players[i].@client != client
-			@@players[i].@client.close
-			@@players.delete_at(i)
-			self.update_state
+	def initialize
+		@players = [] of Player
+		@in_game = false
+		@finished_quote = false
+		@game_info = Channel(String).new
+		@timelimit = 30
+
+		spawn send_quote
+
+		server = TCPServer.new("0.0.0.0", 1234)
+		puts "server running"
+		while client = server.accept?
+			spawn handle_client(client)
+		end
+	end
+
+	private def drop_client(client)
+		(0..@players.size - 1).each do |i|
+			next if @players[i].@client != client
+			@players[i].@client.close
+			@players.delete_at(i)
+			update_state
 			return
 		end
 	end
 
-	def self.handle_client(client)
+	private def handle_client(client)
 		begin
 			while message = client.gets
 				break if message == nil
-				self.handle_response(client, message)
+				handle_response(client, message)
 			end
 		rescue
 		end
 
-		# on close, remove client from @@players
-		self.drop_client(client)
+		# on close, remove client from @players
+		drop_client(client)
 	end
 
-	def self.handle_response(client, message)
+	private def handle_response(client, message)
 		begin
 			res = Mapping::Response.from_json(message)
 		rescue
 			# drop client if they send weird shit
-			self.drop_client(client)
+			drop_client(client)
 			return
 		end
 
@@ -53,78 +69,78 @@ module Typeracer::Server
 			client.close if res.name.size > 16
 
 			# make sure nobody already uses name
-			(0..@@players.size - 1).each do |i|
-				next if @@players[i].@name != res.name
+			(0..@players.size - 1).each do |i|
+				next if @players[i].@name != res.name
 				client.close
 				return
 			end
 
-			@@players << Player.new(client, res.name)
+			@players << Player.new(client, res.name)
 
-			# if @@players turn two theres no reason to send them in_game info
+			# if @players turn two theres no reason to send them in_game info
 			# because theyre the one whos starting the game
-			client << self.build_in_game_info if @@players.size != 2
-			self.update_state
+			client << build_in_game_info if @players.size != 2
+			update_state
 		when "update"
-			return if @@in_game == false
+			return if @in_game == false
 
-			@@players.each do |player|
+			@players.each do |player|
 				next if player.@name != res.name
 				player.percent = res.percent
 				player.wpm = res.wpm
 			end
 
 			# new round if timelimit is reached
-			if @@timelimit == 0
-				@@finished_quote = true
-				@@game_info.send("start game")
+			if @timelimit == 0
+				@finished_quote = true
+				@game_info.send("start game")
 				return
 			end
 
 			# check if everyone has finished their quotes
-			@@players.each do |player|
+			@players.each do |player|
 				return if (player.@percent != 100 && player.@active == true)
 			end
 
 			sleep 5.seconds
-			self.update_state
+			update_state
 		end
 	end
 
-	def self.update_state
-		if @@players.size > 1 && !@@in_game
+	private def update_state
+		if @players.size > 1 && !@in_game
 			# starts game
-			@@in_game = true
-			@@game_info.send("start game")
+			@in_game = true
+			@game_info.send("start game")
 			return
 		end
 
-		if @@players.size > 1 && @@in_game
-			@@finished_quote = true
-			@@game_info.send("start game")
+		if @players.size > 1 && @in_game
+			@finished_quote = true
+			@game_info.send("start game")
 		end
 
-		if @@players.size < 2 && @@in_game
+		if @players.size < 2 && @in_game
 			# end game
-			@@in_game = false
-			@@finished_quote = true
+			@in_game = false
+			@finished_quote = true
 
-			if @@players.size == 1
-				@@players[0].@client << self.build_in_game_info
+			if @players.size == 1
+				@players[0].@client << build_in_game_info
 			end
 		end
 	end
 
-	def self.send_progress
-		return if @@players.size < 2
+	private def send_progress
+		return if @players.size < 2
 
 		send_info = JSON.build do |json|
 			json.object do
 				json.field("type", "progress")
-				json.field("timelimit", @@timelimit)
+				json.field("timelimit", @timelimit)
 				json.field("players") do
 					json.array do
-						@@players.each do |player|
+						@players.each do |player|
 							next if player.@active == false
 
 							json.object do
@@ -138,20 +154,20 @@ module Typeracer::Server
 			end
 		end
 
-		@@players.each do |player|
+		@players.each do |player|
 			player.@client << send_info
 		end
 	end
 
-	def self.send_quote
-		while info = @@game_info.receive
-			@@players.each do |player|
+	private def send_quote
+		while info = @game_info.receive
+			@players.each do |player|
 				player.active = true
 			end
 
 			if info == "start game"
-				@@finished_quote = false
-				@@timelimit = 30
+				@finished_quote = false
+				@timelimit = 30
 
 				# pick random quote
 				path = "./src/typeracer-server/quotes.json"
@@ -171,43 +187,36 @@ module Typeracer::Server
 					end
 				end
 
-				@@players.each do |player|
+				@players.each do |player|
 					player.percent = 0 # reset percent finished for all
 					player.@client << send_info
 				end
 
-				until @@finished_quote
-					@@players.each do |player|
+				until @finished_quote
+					@players.each do |player|
 						if player.@percent == 100
-							@@timelimit = @@timelimit - 1
+							@timelimit = @timelimit - 1
 							break
 						end
 					end
 
-					self.send_progress
+					send_progress
 					sleep 1.seconds
 				end
 			end
 		end
 	end
 
-	def self.build_in_game_info
+	private def build_in_game_info
 		info = JSON.build do |json|
 			json.object do
 				json.field("type", "in_game")
-				json.field("in_game", @@in_game)
+				json.field("in_game", @in_game)
 			end
 		end
 
 		return info
 	end
-
-	# the actual initializing
-	spawn self.send_quote
-
-	server = TCPServer.new("0.0.0.0", 1234)
-	puts "server running"
-	while client = server.accept?
-		spawn self.handle_client(client)
-	end
 end
+
+Server.new
