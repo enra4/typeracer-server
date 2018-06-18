@@ -6,6 +6,7 @@ require "socket"
 
 # i have no idea what im doing
 class Server
+	include Build
 	include Mapping
 	include Player
 
@@ -79,7 +80,7 @@ class Server
 
 			# if @players turn two theres no reason to send them in_game info
 			# because theyre the one whos starting the game
-			client << build_in_game_info if @players.size != 2
+			client << Build.in_game_info(@in_game) if @players.size != 2
 			update_state
 		when "update"
 			return if @in_game == false
@@ -126,7 +127,7 @@ class Server
 			@finished_quote = true
 
 			if @players.size == 1
-				@players[0].@client << build_in_game_info
+				@players[0].@client << Build.in_game_info(@in_game)
 			end
 		end
 	end
@@ -134,26 +135,7 @@ class Server
 	private def send_progress
 		return if @players.size < 2
 
-		send_info = JSON.build do |json|
-			json.object do
-				json.field("type", "progress")
-				json.field("timelimit", @timelimit)
-				json.field("players") do
-					json.array do
-						@players.each do |player|
-							next if player.@active == false
-
-							json.object do
-								json.field("name", player.@name)
-								json.field("percent", player.@percent)
-								json.field("wpm", player.@wpm)
-							end
-						end
-					end
-				end
-			end
-		end
-
+		send_info = Build.progress_info(@players, @timelimit)
 		@players.each do |player|
 			player.@client << send_info
 		end
@@ -172,21 +154,9 @@ class Server
 				# pick random quote
 				path = "./src/typeracer-server/quotes.json"
 				quotes = Mapping::Quotes.from_json(File.read(path)).quotes
-				quote_info = quotes[Random.rand(quotes.size)]
+				quote = quotes[Random.rand(quotes.size)]
 
-				send_info = JSON.build do |json|
-					json.object do
-						json.field("type", "quote")
-						json.field("info") do
-							json.object do
-								json.field("id", quote_info.id)
-								json.field("quote", quote_info.quote)
-								json.field("about", quote_info.about)
-							end
-						end
-					end
-				end
-
+				send_info = Build.quote_info(quote)
 				@players.each do |player|
 					player.percent = 0 # reset percent finished for all
 					player.@client << send_info
@@ -205,17 +175,6 @@ class Server
 				end
 			end
 		end
-	end
-
-	private def build_in_game_info
-		info = JSON.build do |json|
-			json.object do
-				json.field("type", "in_game")
-				json.field("in_game", @in_game)
-			end
-		end
-
-		return info
 	end
 end
 
