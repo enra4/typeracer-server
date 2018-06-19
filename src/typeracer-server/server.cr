@@ -12,7 +12,6 @@ module Server
 		property players
 		property in_game
 		property finished_quote
-		property in_game_info
 		property timelimit
 
 		def initialize
