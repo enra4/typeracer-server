@@ -14,7 +14,7 @@ module Server
 		property finished_quote
 		property timelimit
 
-		def initialize
+		def initialize(ip = "0.0.0.0", port = 1234)
 			@players = [] of Player
 			@in_game = false
 			@finished_quote = false
@@ -23,7 +23,7 @@ module Server
 
 			spawn send_quote
 
-			server = TCPServer.new("0.0.0.0", 1234)
+			server = TCPServer.new(ip, port)
 			spawn do
 				while client = server.accept?
 					spawn handle_client(client)
