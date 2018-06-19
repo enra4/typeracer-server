@@ -63,7 +63,7 @@ describe Build do
 	end
 
 	it "builds progress_info amazingly" do
-		server = Server::Server.new
+		server = Server::Server.new("0.0.0.0", 1235)
 		client = TCPSocket.new
 		server.@players << Player::Player.new(client, "enra")
 		server.@players[0].active = true
@@ -127,7 +127,7 @@ describe Player do
 end
 
 describe Server do
-	server = Server::Server.new
+	server = Server::Server.new("0.0.0.0", 1236)
 
 	it "has correct values" do
 		server.@players.should(eq([] of Player))
