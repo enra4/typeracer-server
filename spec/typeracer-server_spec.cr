@@ -24,6 +24,7 @@ describe Mapping do
 				json.field("type", "join")
 				json.field("name", "abc")
 				json.field("percent", nil)
+				json.field("wpm", 0_f32)
 			end
 		end
 
@@ -31,12 +32,15 @@ describe Mapping do
 		join.type.is_a?(String).should(be_true)
 		join.name.is_a?(String).should(be_true)
 		join.percent.is_a?(Int32 | Nil).should(be_true)
+		join.wpm.is_a?(Float32 | Nil).should(be_true)
+
 
 		update_json = JSON.build do |json|
 			json.object do
 				json.field("type", "update")
 				json.field("name", "abc")
 				json.field("percent", 42)
+				json.field("wpm", 0_f32)
 			end
 		end
 
@@ -44,5 +48,6 @@ describe Mapping do
 		update.type.is_a?(String).should(be_true)
 		update.name.is_a?(String).should(be_true)
 		update.percent.is_a?(Int32 | Nil).should(be_true)
+		update.wpm.is_a?(Float32 | Nil).should(be_true)
 	end
 end
