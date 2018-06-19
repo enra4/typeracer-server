@@ -51,3 +51,44 @@ describe Mapping do
 		update.wpm.is_a?(Float32 | Nil).should(be_true)
 	end
 end
+
+
+describe Build do
+	it "builds in_game_info amazingly" do
+		info = Build.in_game_info(true)
+		hash = JSON.parse(info)
+
+		hash["type"].should(eq("in_game"))
+		hash["in_game"].should(eq(true))
+	end
+
+	it "builds progress_info amazingly" do
+		server = Server::Server.new
+		client = TCPSocket.new
+		server.@players << Player::Player.new(client, "enra")
+		server.@players[0].active = true
+
+		info = Build.progress_info(server.@players, server.@timelimit)
+		hash = JSON.parse(info)
+
+		hash["type"].should(eq("progress"))
+		hash["timelimit"].should(eq(30))
+		hash["players"][0]["name"].should(eq("enra"))
+		hash["players"][0]["percent"].should(eq(0))
+		hash["players"][0]["wpm"].should(eq(0_f32))
+	end
+
+	it "builds quote_info amazingly" do
+		path = "./src/typeracer-server/quotes.json"
+		quotes = Mapping::Quotes.from_json(File.read(path)).quotes
+		quote = quotes[Random.rand(quotes.size)]
+
+		info = Build.quote_info(quote)
+		hash = JSON.parse(info)
+
+		hash["type"].should(eq("quote"))
+		hash["info"]["id"].as_i64.is_a?(Int64)
+		hash["info"]["quote"].as_s.is_a?(String)
+		hash["info"]["about"].as_s.is_a?(String)
+	end
+end
