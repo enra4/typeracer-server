@@ -125,3 +125,22 @@ describe Player do
 		player.@active.should(eq(true))
 	end
 end
+
+describe Server do
+	server = Server::Server.new
+
+	it "has correct values" do
+		server.@players.should(eq([] of Player))
+		server.@in_game.should(eq(false))
+		server.@finished_quote.should(eq(false))
+		server.@timelimit.should(eq(30))
+	end
+
+	it "has correct types" do
+		server.@players.is_a?(Array(Player::Player)).should(be_true)
+		server.@in_game.is_a?(Bool).should(be_true)
+		server.@finished_quote.is_a?(Bool).should(be_true)
+		server.@game_info.is_a?(Channel(String)).should(be_true)
+		server.@timelimit.is_a?(Int32).should(be_true)
+	end
+end
