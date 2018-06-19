@@ -21,12 +21,37 @@ module Server
 			@game_info = Channel(String).new
 			@timelimit = 30
 
-			spawn send_quote
-
 			server = TCPServer.new(ip, port)
 			spawn do
 				while client = server.accept?
 					spawn handle_client(client)
+				end
+			end
+
+			spawn do
+				while info = @game_info.receive
+					@players.each do |player|
+						player.active = true
+					end
+
+					if info == "start game"
+						@finished_quote = false
+						@timelimit = 30
+
+						send_quote
+
+						until @finished_quote
+							@players.each do |player|
+								if player.@percent == 100
+									@timelimit = @timelimit - 1
+									break
+								end
+							end
+
+							send_progress
+							sleep 1.seconds
+						end
+					end
 				end
 			end
 		end
@@ -141,38 +166,15 @@ module Server
 		end
 
 		private def send_quote
-			while info = @game_info.receive
-				@players.each do |player|
-					player.active = true
-				end
+			# pick random quote
+			path = "./src/typeracer-server/quotes.json"
+			quotes = Mapping::Quotes.from_json(File.read(path)).quotes
+			quote = quotes[Random.rand(quotes.size)]
 
-				if info == "start game"
-					@finished_quote = false
-					@timelimit = 30
-
-					# pick random quote
-					path = "./src/typeracer-server/quotes.json"
-					quotes = Mapping::Quotes.from_json(File.read(path)).quotes
-					quote = quotes[Random.rand(quotes.size)]
-
-					send_info = Build.quote_info(quote)
-					@players.each do |player|
-						player.percent = 0 # reset percent finished for all
-						player.@client << send_info
-					end
-
-					until @finished_quote
-						@players.each do |player|
-							if player.@percent == 100
-								@timelimit = @timelimit - 1
-								break
-							end
-						end
-
-						send_progress
-						sleep 1.seconds
-					end
-				end
+			send_info = Build.quote_info(quote)
+			@players.each do |player|
+				player.percent = 0 # reset percent finished for all
+				player.@client << send_info
 			end
 		end
 	end
