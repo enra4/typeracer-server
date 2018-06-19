@@ -92,3 +92,36 @@ describe Build do
 		hash["info"]["about"].as_s.is_a?(String)
 	end
 end
+
+
+describe Player do
+	client = TCPSocket.new
+	player = Player::Player.new(client, "enra")
+
+	it "has correct values" do
+		player.@client.should(eq(client))
+		player.@name.should(eq("enra"))
+		player.@percent.should(eq(0))
+		player.@wpm.should(eq(0_f32))
+		player.@active.should(eq(false))
+	end
+
+	it "has correct types" do
+		player.@client.is_a?(TCPSocket).should(be_true)
+		player.@name.is_a?(String).should(be_true)
+		player.@percent.is_a?(Int32 | Nil).should(be_true)
+		player.@wpm.is_a?(Float32 | Nil).should(be_true)
+		player.@active.is_a?(Bool).should(be_true)
+	end
+
+	it "has setters that work" do
+		player.percent = 10
+		player.@percent.should(eq(10))
+
+		player.wpm = 10_f32
+		player.@wpm.should(eq(10_f32))
+
+		player.active = true
+		player.@active.should(eq(true))
+	end
+end
