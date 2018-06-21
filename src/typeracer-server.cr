@@ -1,5 +1,5 @@
 require "./typeracer-server/*"
 
-Server::Server.new("0.0.0.0", 1234)
+Server::Server.new
 puts "server running"
 sleep

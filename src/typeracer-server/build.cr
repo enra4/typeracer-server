@@ -18,12 +18,12 @@ module Build
 				json.field("players") do
 					json.array do
 						players.each do |player|
-							next if player.@active == false
+							next if player.active == false
 
 							json.object do
-								json.field("name", player.@name)
-								json.field("percent", player.@percent)
-								json.field("wpm", player.@wpm)
+								json.field("name", player.name)
+								json.field("percent", player.percent)
+								json.field("wpm", player.wpm)
 							end
 						end
 					end

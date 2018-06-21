@@ -9,10 +9,11 @@ module Server
 		include Mapping
 		include Player
 
-		property players
-		property in_game
-		property finished_quote
-		property timelimit
+		getter players
+		getter in_game
+		getter finished_quote
+		getter game_info
+		getter timelimit
 
 		def initialize(ip = "0.0.0.0", port = 1234)
 			@players = [] of Player
@@ -42,7 +43,7 @@ module Server
 
 						until @finished_quote
 							@players.each do |player|
-								if player.@percent == 100
+								if player.percent == 100
 									@timelimit = @timelimit - 1
 									break
 								end
@@ -58,8 +59,8 @@ module Server
 
 		private def drop_client(client)
 			(0..@players.size - 1).each do |i|
-				next if @players[i].@client != client
-				@players[i].@client.close
+				next if @players[i].client != client
+				@players[i].client.close
 				@players.delete_at(i)
 				update_state
 				return
@@ -95,7 +96,7 @@ module Server
 
 				# make sure nobody already uses name
 				(0..@players.size - 1).each do |i|
-					next if @players[i].@name != res.name
+					next if @players[i].name != res.name
 					client.close
 					return
 				end
@@ -110,7 +111,7 @@ module Server
 				return if @in_game == false
 
 				@players.each do |player|
-					next if player.@name != res.name
+					next if player.name != res.name
 					player.percent = res.percent
 					player.wpm = res.wpm
 				end
@@ -124,7 +125,7 @@ module Server
 
 				# check if everyone has finished their quotes
 				@players.each do |player|
-					return if (player.@percent != 100 && player.@active == true)
+					return if (player.percent != 100 && player.active == true)
 				end
 
 				sleep 5.seconds
@@ -151,7 +152,7 @@ module Server
 				@finished_quote = true
 
 				if @players.size == 1
-					@players[0].@client << Build.in_game_info(@in_game)
+					@players[0].client << Build.in_game_info(@in_game)
 				end
 			end
 		end
@@ -161,7 +162,7 @@ module Server
 
 			send_info = Build.progress_info(@players, @timelimit)
 			@players.each do |player|
-				player.@client << send_info
+				player.client << send_info
 			end
 		end
 
@@ -174,7 +175,7 @@ module Server
 			send_info = Build.quote_info(quote)
 			@players.each do |player|
 				player.percent = 0 # reset percent finished for all
-				player.@client << send_info
+				player.client << send_info
 			end
 		end
 	end

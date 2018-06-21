@@ -65,10 +65,10 @@ describe Build do
 	it "builds progress_info amazingly" do
 		server = Server::Server.new("0.0.0.0", 1235)
 		client = TCPSocket.new
-		server.@players << Player::Player.new(client, "enra")
-		server.@players[0].active = true
+		server.players << Player::Player.new(client, "enra")
+		server.players[0].active = true
 
-		info = Build.progress_info(server.@players, server.@timelimit)
+		info = Build.progress_info(server.players, server.timelimit)
 		hash = JSON.parse(info)
 
 		hash["type"].should(eq("progress"))
@@ -99,30 +99,30 @@ describe Player do
 	player = Player::Player.new(client, "enra")
 
 	it "has correct values" do
-		player.@client.should(eq(client))
-		player.@name.should(eq("enra"))
-		player.@percent.should(eq(0))
-		player.@wpm.should(eq(0_f32))
-		player.@active.should(eq(false))
+		player.client.should(eq(client))
+		player.name.should(eq("enra"))
+		player.percent.should(eq(0))
+		player.wpm.should(eq(0_f32))
+		player.active.should(eq(false))
 	end
 
 	it "has correct types" do
-		player.@client.is_a?(TCPSocket).should(be_true)
-		player.@name.is_a?(String).should(be_true)
-		player.@percent.is_a?(Int32 | Nil).should(be_true)
-		player.@wpm.is_a?(Float32 | Nil).should(be_true)
-		player.@active.is_a?(Bool).should(be_true)
+		player.client.is_a?(TCPSocket).should(be_true)
+		player.name.is_a?(String).should(be_true)
+		player.percent.is_a?(Int32 | Nil).should(be_true)
+		player.wpm.is_a?(Float32 | Nil).should(be_true)
+		player.active.is_a?(Bool).should(be_true)
 	end
 
 	it "has setters that work" do
 		player.percent = 10
-		player.@percent.should(eq(10))
+		player.percent.should(eq(10))
 
 		player.wpm = 10_f32
-		player.@wpm.should(eq(10_f32))
+		player.wpm.should(eq(10_f32))
 
 		player.active = true
-		player.@active.should(eq(true))
+		player.active.should(eq(true))
 	end
 end
 
@@ -130,17 +130,17 @@ describe Server do
 	server = Server::Server.new("0.0.0.0", 1236)
 
 	it "has correct values" do
-		server.@players.should(eq([] of Player))
-		server.@in_game.should(eq(false))
-		server.@finished_quote.should(eq(false))
-		server.@timelimit.should(eq(30))
+		server.players.should(eq([] of Player))
+		server.in_game.should(eq(false))
+		server.finished_quote.should(eq(false))
+		server.timelimit.should(eq(30))
 	end
 
 	it "has correct types" do
-		server.@players.is_a?(Array(Player::Player)).should(be_true)
-		server.@in_game.is_a?(Bool).should(be_true)
-		server.@finished_quote.is_a?(Bool).should(be_true)
-		server.@game_info.is_a?(Channel(String)).should(be_true)
-		server.@timelimit.is_a?(Int32).should(be_true)
+		server.players.is_a?(Array(Player::Player)).should(be_true)
+		server.in_game.is_a?(Bool).should(be_true)
+		server.finished_quote.is_a?(Bool).should(be_true)
+		server.game_info.is_a?(Channel(String)).should(be_true)
+		server.timelimit.is_a?(Int32).should(be_true)
 	end
 end
